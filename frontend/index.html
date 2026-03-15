@@ -11,20 +11,34 @@
         body { font-family: 'Inter', sans-serif; }
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+        
+        /* Fix select dropdown for Chrome/Safari */
         select {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5rem;
+            padding-right: 3rem;
         }
+        
+        select::-ms-expand {
+            display: none;
+        }
+        
+        /* Ensure options are visible */
         select option {
-            background-color: #764ba2;
+            background-color: #4c1d95;
             color: white;
+            font-size: 16px;
+            padding: 10px;
         }
-        select option:hover,
-        select option:focus,
-        select option:active,
-        select option:checked {
-            background-color: #667eea !important;
-            color: white !important;
+        
+        select:focus {
+            outline: none;
+            border-color: #a78bfa;
         }
     </style>
 </head>
@@ -139,5 +153,56 @@
             <p class="mt-2 text-sm">GitHub: github.com/ppit9092/arbitrum-ai-yield-optimizer</p>
         </footer>
     </div>
+
+    <script>
+        // Wallet Connection
+        const connectBtn = document.getElementById('connectBtn');
+        const walletAddress = document.getElementById('walletAddress');
+        let provider, signer;
+
+        connectBtn.addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Request account access
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // Create provider
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    
+                    // Get address
+                    const address = await signer.getAddress();
+                    const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                    
+                    // Update UI
+                    connectBtn.classList.add('hidden');
+                    walletAddress.textContent = shortAddress;
+                    walletAddress.classList.remove('hidden');
+                    
+                    console.log('Connected:', address);
+                } catch (error) {
+                    console.error('Connection error:', error);
+                    alert('Failed to connect wallet. Please try again.');
+                }
+            } else {
+                alert('Please install MetaMask to use this dApp!\nhttps://metamask.io/download/');
+            }
+        });
+
+        // Handle account changes
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) {
+                    // User disconnected
+                    connectBtn.classList.remove('hidden');
+                    walletAddress.classList.add('hidden');
+                } else {
+                    // Account changed
+                    const shortAddress = `${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`;
+                    walletAddress.textContent = shortAddress;
+                }
+            });
+        }
+    </script>
 </body>
 </html>
